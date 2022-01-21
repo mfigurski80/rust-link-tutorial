@@ -26,6 +26,9 @@ impl<T> List<T> {
             node.elem
         })
     }
+    pub fn peek(&self) -> Option<&T> {
+        self.head.as_ref().map(|node| &node.elem)
+    }
 }
 
 impl<T> Drop for List<T> {
@@ -44,11 +47,14 @@ mod test {
     fn basics() {
         let mut l = List::new();
         // Check empty list behavior
+        assert_eq!(l.peek(), None);
         assert_eq!(l.pop(), None);
         // Populate
         l.push(1);
         l.push(2);
         l.push(3);
+        // Check Peek
+        assert_eq!(l.peek(), Some(&3));
         // Check removal
         assert_eq!(l.pop(), Some(3));
         assert_eq!(l.pop(), Some(2));
