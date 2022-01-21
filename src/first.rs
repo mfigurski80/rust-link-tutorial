@@ -13,6 +13,9 @@ pub struct IntoIter<T>(List<T>);
 pub struct Iter<'a, T> {
     next: Option<&'a Node<T>>,
 }
+pub struct IterMut<'a, T> {
+    next: Option<&'a mut Node<T>>,
+}
 
 impl<T> List<T> {
     pub fn new() -> Self {
@@ -40,9 +43,14 @@ impl<T> List<T> {
     pub fn into_iter(self) -> IntoIter<T> {
         IntoIter(self)
     }
-    pub fn iter<'a>(&'a self) -> Iter<'a, T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             next: self.head.as_deref(), // removes box from elem
+        }
+    }
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
+        IterMut {
+            next: self.head.as_deref_mut(),
         }
     }
 }
@@ -69,6 +77,16 @@ impl<'a, T> Iterator for Iter<'a, T> {
         self.next.map(|node| {
             self.next = node.next.as_deref();
             &node.elem
+        })
+    }
+}
+
+impl<'a, T> Iterator for IterMut<'a, T> {
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.take().map(|node| {
+            self.next = node.next.as_deref_mut();
+            &mut node.elem
         })
     }
 }
@@ -129,6 +147,18 @@ mod test {
         assert_eq!(iter.next(), Some(&3));
         assert_eq!(iter.next(), Some(&2));
         assert_eq!(iter.next(), Some(&1));
+        assert_eq!(iter.next(), None);
+    }
+    #[test]
+    fn iter_mut() {
+        let mut l = List::new();
+        l.push(1);
+        l.push(2);
+        l.push(3);
+        let mut iter = l.iter_mut();
+        assert_eq!(iter.next(), Some(&mut 3));
+        assert_eq!(iter.next(), Some(&mut 2));
+        assert_eq!(iter.next(), Some(&mut 1));
         assert_eq!(iter.next(), None);
     }
 }
