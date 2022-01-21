@@ -9,6 +9,8 @@ struct Node<T> {
     next: Link<T>,
 }
 
+pub struct IntoIter<T>(List<T>);
+
 impl<T> List<T> {
     pub fn new() -> Self {
         List { head: None }
@@ -32,6 +34,9 @@ impl<T> List<T> {
     pub fn peek_mut(&mut self) -> Option<&mut T> {
         self.head.as_mut().map(|node| &mut node.elem)
     }
+    pub fn into_iter(self) -> IntoIter<T> {
+        IntoIter(self)
+    }
 }
 
 impl<T> Drop for List<T> {
@@ -40,6 +45,13 @@ impl<T> Drop for List<T> {
         while let Some(mut boxed_node) = cur_link {
             cur_link = boxed_node.next.take();
         }
+    }
+}
+
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop()
     }
 }
 
@@ -76,5 +88,17 @@ mod test {
         // Check exhaustion
         assert_eq!(l.pop(), Some(1));
         assert_eq!(l.pop(), None);
+    }
+    #[test]
+    fn into_iter() {
+        let mut l = List::new();
+        l.push(1);
+        l.push(2);
+        l.push(3);
+        let mut iter = l.into_iter();
+        assert_eq!(iter.next(), Some(3));
+        assert_eq!(iter.next(), Some(2));
+        assert_eq!(iter.next(), Some(1));
+        assert_eq!(iter.next(), None);
     }
 }
